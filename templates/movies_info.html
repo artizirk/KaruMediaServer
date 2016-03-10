@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block movies_active %}active{% endblock %}
+{% block body %}
+
+
+<div class="row">
+  <div class="col-sm-4 col-md-3">
+  <a href="{{ url_for('gen_play_movie_url', movie_type="movie",movie_name=movie) }}" class="btn btn-success btn-block" role="button"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Mängi</a>
+  <br>
+    <img src="{{ url_for('static', filename='filmid/{}/cover.jpg'.format(movie)) }}" alt="{{movie}}" style="max-height:315px; margin-left:auto; margin-right:auto; display:block;">
+  </div>
+  <div class="col-sm-8 col-md-9" style="margin-top: -17px;">
+    <h3>{{movie}}</h3>
+    {% if metadata %}
+    <p>
+      <dl>
+        <dt>Genres</dt>
+        <dd>{{metadata["genres"]}}</dd>
+        <dt>Rating</dt>
+        <dd>{{metadata["rating"]}}</dd>
+        <dt>Plot</dt>
+        <dd>{{metadata["plots"][0]}}</dd>
+        {% for key, item in metadata.items() %}
+          {% if key not in ("genres", "rating", "plots") %}
+            <dt>{{key}}</dt>
+            <dd>{{item}}</dd>
+          {% endif %}
+        {% endfor %}
+      </dl> 
+    </p>
+    {% endif %}
+  </div>
+
+</div>
+
+
+{% endblock %}

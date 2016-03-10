@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block movies_active %}active{% endblock %}
+{% block body %}
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <p class="navbar-text">Sorteeri: </p>
+    <ul class="nav navbar-nav">
+     {% for sort_key, sort_name in sort_keys%}
+        <li {% if selected_sort_key == sort_key %}class="active"{%endif%}><a href="?sort={% if selected_sort_key == sort_key %}-{{sort_key}}{%else%}{{sort_key}}{%endif%}&view={{view}}&search={{search}}">{{sort_name}}</a></li>
+      {% endfor %}
+    </ul>
+    <ul class="nav navbar-nav pull-right">
+      <li {% if view=="thumb" %}class="active"{% endif %}><a href="?sort={{selected_sort_key}}&view=thumb&search={{search}}"><span class="glyphicon glyphicon-th" aria-hidden="true"></span></a></li>
+      <li {% if view=="table" %}class="active"{% endif %}><a href="?sort={{selected_sort_key}}&view=table&search={{search}}"><span class="glyphicon glyphicon-th-list" aria-hidden="true"></span></a></li>      
+    </ul>
+    <form class="navbar-form">
+      <input type="hidden" name="sort" value="{{selected_sort_key}}">
+      <input type="hidden" name="view" value="{{view}}">
+      <div class="form-group" style="display:inline;">
+        <div class="input-group" style="display:table;padding-right:10px;padding-left: 10px;">
+          <span class="input-group-addon" style="width:1%;"><span class="glyphicon glyphicon-search"></span></span>
+          <input class="form-control" name="search" placeholder="Otsi filme" autocomplete="on" autofocus="autofocus" type="text" value="{{search}}">
+        </div>
+      </div>
+
+    </form>
+  </div>
+</nav>
+
+{% for movie in movies %}
+  {% if view == "thumb"%}
+  <div class="col-sm-6 col-md-4" style="height:490px;">
+    <div class="thumbnail">
+      <img src="{{ url_for('static', filename='filmid/{}/cover.jpg'.format(movie)) }}" alt="{{movie}}" style="max-height:315px;">
+      <div class="caption">
+        <h3>{{movie}}</h3>
+        <p><a href="{{ url_for('gen_play_movie_url', movie_type="movie",movie_name=movie) }}" class="btn btn-success" role="button"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Mängi</a>
+        <a href="{{ url_for('show_movies_info', movie_name=movie) }}" class="btn btn-info" role="button"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Rohkem infot</a>
+        </p>
+      </div>
+    </div>
+  </div>
+  {% elif view == "table" %}
+    <div class="row" style="margin-bottom:3px;padding-bottom:3px;border-bottom-style:solid;border-width:1px;border-color:#eee">
+      <div style="margin-left:20px;display:inline;">
+        <h3 style="display:inline;">{{movie}}</h3>
+      </div>
+      <div class="pull-right" style="margin-right: 20px;">
+        <a href="{{ url_for('gen_play_movie_url', movie_type="movie",movie_name=movie) }}" class="btn btn-success" role="button"><span class="glyphicon glyphicon-play" aria-hidden="true"></span> Mängi</a>
+        <a href="{{ url_for('show_movies_info', movie_name=movie) }}" class="btn btn-info" role="button"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> Rohkem infot</a>
+      </div>
+    </div>
+  {%endif%}
+
+{% endfor %}
+
+{% if not movies %}
+<h3 style="text-align:center">Ühtegi filmi ei leitud</h3>
+{% endif %}
+
+
+{% endblock %}
