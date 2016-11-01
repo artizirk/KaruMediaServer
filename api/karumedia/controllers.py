@@ -42,7 +42,6 @@ class MoviesCollection(BaseResource):
                     "title_english":metadata["title"],
                     "title_long":movie_path.name,
                     "year":metadata["year"],
-                    "runtime": int(metadata["runtime"]) // 100,
                     "imdb_code": metadata["imdb_id"],
                     "rating": metadata["rating"],
                     "summary": metadata["plot_outline"],
@@ -51,6 +50,10 @@ class MoviesCollection(BaseResource):
                     "genres": metadata["genres"],
                     "state": "ok"
                 }
+                try:
+                    metadata["runtime"] = int(metadata["runtime"]) // 100
+                except ValueError as err:
+                    pass
                 if metadata["plots"]:
                     mobj["description_full"] = metadata["plots"][0]
                 movies.append(mobj)
