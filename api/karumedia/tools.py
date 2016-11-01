@@ -9,7 +9,7 @@ import falcon.status_codes as status
 
 class JsonRequest(FalconRequest):
 
-    __slots__ = set(FalconRequest.__slots__ + ("_json", "_args"))
+    #__slots__ = set(FalconRequest.__slots__ + ("_json", "_args"))
 
 
     @property
@@ -27,7 +27,7 @@ class JsonRequest(FalconRequest):
 
 class JsonResponse(FalconResponse):
 
-    __slots__ = set(FalconRequest.__slots__ + ("_json",))
+    #__slots__ = set(FalconRequest.__slots__ + ("_json",))
 
 
     @property
