@@ -1,3 +1,7 @@
 body {
   padding-top: 70px;
 }
+.thumbnail>img {
+    box-shadow: 0px 2px 10px #000;
+}
+
