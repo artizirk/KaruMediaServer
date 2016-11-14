@@ -7,13 +7,17 @@ import requests
 from pprint import pprint
 import re
 import logging
-from logging import info, debug, warning
+from logging import info, debug, warning, error
 import subprocess
 
 logging.basicConfig(level=logging.DEBUG)
 
 movie_dir = "/home/arti/Videod/Filmid"
 
+YTKEY = os.environ.get("YTKEY")
+if not YTKEY:
+    error("YTKEY not set")
+    exit(1)
 
 imdb = Imdb()
 
@@ -42,7 +46,7 @@ def write_metadata(movie_dir, mm):
                 "genres": mm.genres,
                 "plots": mm.plots,
                 "imdb_id":str(mm.imdb_id)}
-    
+
     info("opening metadata.json in {} for {}".format(movie_dir, metadata["title"]))
     with open(movie_dir+"/metadata.json", "w") as f:
         info("writing metadata for {}".format(metadata["title"]))
@@ -76,13 +80,29 @@ def download_trailer(movie_dir, metadata):
     subprocess.call(['wget', trailer[2],
                      "-O", movie_dir+"/trailer.mp4"])
 
+def add_yt_trailer_code(md):
+    params = {"key": YTKEY,
+              "part":"id", "maxResults":1,
+              "q":"{} ({}) trailer".format(md.get("title"), md.get("year", ""))}
+    r = requests.get("https://www.googleapis.com/youtube/v3/search", params=params)
+    md["yt_trailer_code"] = r.json()["items"][0]["id"]["videoId"]
+    return md
+
 def metadata_update_needed(metadata_file):
     with open(metadata_file, "r") as f:
         md = json.loads(f.read())
         if "imdb_id" not in md:
             return True
+        elif "yt_trailer_code" not in md:
+            md = add_yt_trailer_code(md)
+            print(md.get("title"), md.get("yt_trailer_code"))
+            fd = open(metadata_file, "w")
+            fd.write(json.dumps(md, indent=4, sort_keys=True))
+            fd.close()
         else:
             return False
+
+
 
 for movie in os.listdir(movie_dir):
     #print(movie)
@@ -103,6 +123,3 @@ for movie in os.listdir(movie_dir):
     except:
         logging.exception("Poster download failed")
     #download_trailer(movie_dir+"/"+movie, mm)
-
-
-

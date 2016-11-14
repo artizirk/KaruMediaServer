@@ -48,6 +48,7 @@ class MoviesCollection(BaseResource):
                     "synopsis": metadata["plot_outline"],
                     "mpa_rating": metadata["certification"],
                     "genres": metadata["genres"],
+                    "yt_trailer_code": metadata["yt_trailer_code"],
                     "state": "ok"
                 }
                 try:
