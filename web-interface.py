@@ -6,8 +6,8 @@ from flask import render_template
 from flask import request
 from urllib.parse import quote_plus
 
-movie_base = "/media/kraam/Videod/Filmid"
-movie_dir = movie_base+"/Nimed"
+movie_base = "/home/arti/Videod/Filmid"
+movie_dir = movie_base
 
 app = Flask(__name__)
 

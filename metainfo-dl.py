@@ -12,7 +12,7 @@ import subprocess
 
 logging.basicConfig(level=logging.DEBUG)
 
-movie_dir = "/media/kraam/Videod/Filmid/Nimed"
+movie_dir = "/home/arti/Videod/Filmid"
 
 
 imdb = Imdb()
