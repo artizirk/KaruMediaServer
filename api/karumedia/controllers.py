@@ -1,3 +1,4 @@
+import os
 import re
 import json
 from falcon import HTTPInternalServerError, HTTP_201
@@ -5,11 +6,11 @@ from .tools import TODOException
 
 movie_name_and_year = re.compile("(.*)\((.*)\)")
 
-class BaseResource():
+class BaseMovieResource():
     def __init__(self, path):
         self.path = path
 
-class MoviesCollection(BaseResource):
+class MoviesCollection(BaseMovieResource):
 
     def on_get(self, req, resp):
         movie_paths = [p for p in (self.path / 'Filmid').iterdir() if p.is_dir()]
@@ -69,7 +70,26 @@ class MoviesCollection(BaseResource):
                 }
         resp.json = jobj
 
-class MoviesResource(BaseResource):
+class MoviesResource(BaseMovieResource):
 
     def on_get(self, req, resp, movie):
         resp.json = [{"path": self.path, "movie":movie}]
+
+class MovieStreamUrlResource(BaseMovieResource):
+    
+    def on_get(self, req, resp, movie):
+        movie_name = movie
+        path = self.path / "Filmid"
+        movie_files = os.listdir(str(path / movie_name))
+        sizes = []
+        for movie_file in movie_files:
+            sizes.append((os.path.getsize(str(path / movie_name / movie_file)), movie_file))
+        file_name = sorted(sizes)[-1][1]
+        resp.json = {
+            "default": 'https://media.arti.ee/Filmid/{}/{}'.format(movie_name.replace(" ", "%20"), file_name.replace(" ", "%20"))
+        }
+
+class MagnetResource():
+
+    def on_post(self, req, resp):
+        resp.json = [req.json]

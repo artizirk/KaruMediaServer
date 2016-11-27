@@ -17,7 +17,20 @@ class AboutResource():
             }
         r.update({"endpoints":[
                         {"url":"/",
-                        "description":"About this API"}
+                        "method":"GET",
+                        "description":"About this API"},
+                        {"url":"/movies",
+                        "method":"GET",
+                        "description":"All movies on this server"},
+                        {"url":"/movies/{movie}",
+                        "method":"GET",
+                        "description":"Movie details"},
+                        {"url":"/movies/{movie}/stream",
+                        "method":"GET",
+                        "description":"Returns list of stream urls for the movie"},
+                        {"url":"/magnet",
+                        "method":"POST",
+                        "description":"Add a movie via magnet hash"}
                     ]})
 
         resp.body = json.dumps(r, indent=4)
@@ -31,3 +44,6 @@ path = Path("/home/arti/Videod")
 
 app.add_route("/movies", MoviesCollection(path))
 app.add_route("/movies/{movie}", MoviesResource(path))
+app.add_route("/movies/{movie}/stream", MovieStreamUrlResource(path))
+
+app.add_route("/magnet", MagnetResource())
