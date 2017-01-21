@@ -1,8 +1,14 @@
 import os
 import re
 import json
+from . import tasks
 from falcon import HTTPInternalServerError, HTTP_201
+from bson.objectid import ObjectId
 from .tools import TODOException
+from .models import *
+from pprint import pprint
+from urllib.parse import quote
+
 
 movie_name_and_year = re.compile("(.*)\((.*)\)")
 
@@ -10,55 +16,52 @@ class BaseMovieResource():
     def __init__(self, path):
         self.path = path
 
+def build_movie_object(media):
+    mobj = {
+        "title":media.title,
+        "title_english":media.title,
+        "title_long": f"{media.title} ({media.year})",
+        "year":media.year,
+        "imdb_code": media.imdb_id,
+        "rating": media.rating,
+        "summary": media.plot_outline,
+        "synopsis": media.plot_outline,
+        "mpa_rating": media.mpa_rating,
+        "genres": media.genres,
+        "yt_trailer_code": media.yt_trailer_code,
+        "state": "ok",
+        "id": media.id
+    }
+    try:
+        mobj["runtime"] = media.runtime // 100
+    except:
+        pass
+    if media.plots:
+        mobj["description_full"] = media.plots[0]
+
+    relevant_tasks = list(Task.objects(imdb_id=media.imdb_id, state__ne="done"))
+    if relevant_tasks:
+        pprint(relevant_tasks)
+        mobj["state"] = "tasks_running"
+        mobj["relevant_tasks"] = [task.id for task in relevant_tasks]
+
+    mobj["streams"] = {}
+    stream_urls = list(MediaFile.objects(media=media))
+    if stream_urls:
+        mobj["streams"] = {media_file.resolution: media_file.url for media_file in stream_urls if media_file.mimetype.startswith("video")}
+
+    mobj["small_cover_image"] = f"https://media.arti.ee/Filmid/{quote(mobj['title_long'])}/cover.jpg"
+    mobj["medium_cover_image"] = mobj["small_cover_image"]
+    mobj["large_cover_image"] = mobj["medium_cover_image"]
+
+    return mobj
+
 class MoviesCollection(BaseMovieResource):
 
     def on_get(self, req, resp):
-        movie_paths = [p for p in (self.path / 'Filmid').iterdir() if p.is_dir()]
         movies = []
-        for movie_path in movie_paths:
-            if not (movie_path / "metadata.json").exists():
-                match = movie_name_and_year.match(movie_path.name)
-                if not match:
-                    mobj = {
-                        "title":movie_path.name,
-                        "title_english":movie_path.name,
-                        "title_long":movie_path.name,
-                        "state":"ok"
-                    }
-                else:
-                    movie_name, movie_year = match.groups()
-                    mobj = {
-                        "title":movie_name,
-                        "title_english":movie_name,
-                        "title_long":movie_path.name,
-                        "year":movie_year,
-                        "state": "ok"
-                    }
-                movies.append(mobj)
-                continue
-            with (movie_path / "metadata.json").open()  as f:
-                metadata = json.loads(f.read())
-                mobj = {
-                    "title":metadata["title"],
-                    "title_english":metadata["title"],
-                    "title_long":movie_path.name,
-                    "year":metadata["year"],
-                    "imdb_code": metadata["imdb_id"],
-                    "rating": metadata["rating"],
-                    "summary": metadata["plot_outline"],
-                    "synopsis": metadata["plot_outline"],
-                    "mpa_rating": metadata["certification"],
-                    "genres": metadata["genres"],
-                    "yt_trailer_code": metadata["yt_trailer_code"],
-                    "state": "ok"
-                }
-                try:
-                    metadata["runtime"] = int(metadata["runtime"]) // 100
-                except ValueError as err:
-                    pass
-                if metadata["plots"]:
-                    mobj["description_full"] = metadata["plots"][0]
-                movies.append(mobj)
+        for media in Media.objects:
+            movies.append(build_movie_object(media))
         jobj = {"data":{
                     "limit":len(movies),
                     "count":len(movies),
@@ -73,23 +76,37 @@ class MoviesCollection(BaseMovieResource):
 class MoviesResource(BaseMovieResource):
 
     def on_get(self, req, resp, movie):
-        resp.json = [{"path": self.path, "movie":movie}]
-
-class MovieStreamUrlResource(BaseMovieResource):
-    
-    def on_get(self, req, resp, movie):
-        movie_name = movie
-        path = self.path / "Filmid"
-        movie_files = os.listdir(str(path / movie_name))
-        sizes = []
-        for movie_file in movie_files:
-            sizes.append((os.path.getsize(str(path / movie_name / movie_file)), movie_file))
-        file_name = sorted(sizes)[-1][1]
-        resp.json = {
-            "default": 'https://media.arti.ee/Filmid/{}/{}'.format(movie_name.replace(" ", "%20"), file_name.replace(" ", "%20"))
-        }
+        try:
+            media = Media.objects.get(id=movie)
+        except ValidationError:
+            media = Media.objects.get(imdb_id=movie)
+        resp.json = build_movie_object(media)
 
 class MagnetResource():
 
     def on_post(self, req, resp):
-        resp.json = [req.json]
+        json = req.json
+        if not 'info_hash' in json:
+            raise ValueError("info_hash missing from request")
+        task = TaskMetainfoDl(info_hash=json['info_hash'])
+        task.imdb_code = json.get('imdb_code')
+        task.save()
+        tasks.metainfo_dl(str(task.id))
+        resp.json = {"task_id":task.id}
+
+
+class TaskCollection():
+
+    def on_get(self, req, resp):
+        tasks = list()
+        for task in Task.objects:
+            tasks.append(task.to_mongo())
+        resp.json = tasks
+
+class TaskResource():
+    def on_get(self, req, resp, task_id):
+        task = Task.objects.get(id=task_id)
+        resp.json = task.to_mongo()
+
+    def on_delete(self, req, resp, task_id):
+        Task.objects(id=task_id).delete()

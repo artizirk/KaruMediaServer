@@ -1,10 +1,24 @@
 
 import json
+import datetime
 
 from falcon import Request as FalconRequest
 from falcon import Response as FalconResponse
-from falcon.errors import HTTPBadRequest, HTTPMissingParam, HTTPError
+from falcon.errors import HTTPBadRequest, HTTPMissingParam, HTTPError, HTTPNotFound
 import falcon.status_codes as status
+from bson.objectid import ObjectId
+from mongoengine import DoesNotExist
+
+class BSONDumps(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        elif isinstance(obj, datetime.datetime):
+            return obj.timestamp()
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
+dumps = BSONDumps(indent=4).encode
 
 
 class JsonRequest(FalconRequest):
@@ -37,10 +51,13 @@ class JsonResponse(FalconResponse):
     @json.setter
     def json(self, value):
         self._json = value
-        self.body = json.dumps(value, indent=4)
+        self.body = dumps(value)
 
 def error_handler(ex, req, resp, params):
-    raise HTTPBadRequest(type(ex).__name__, str(ex))
+    if type(ex).__name__ == DoesNotExist.__name__:
+        raise HTTPNotFound(title=type(ex).__name__, description=str(ex))
+    else:
+        raise HTTPBadRequest(type(ex).__name__, str(ex))
 
 class TODOException(HTTPError):
 
