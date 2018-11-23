@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<meta charset="utf-8">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<meta property="og:title" content="media.arti.ee" />
+<meta property="og:url" content="https://media.arti.ee" />
+<meta property="og:image" content="https://media.arti.ee" />
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+<link rel=icon href="/favicon.ico" type="image/x-icon" />
+<title>media.arti.ee</title>
+<style>
+#list, #list-path {
+    display: none;
+    font-family: monospace;
+    max-width: 65rem;
+    margin: 0 auto;
+}
+
+body {
+    background-image: url("/.darknoise.png");
+    background-color: rgb(33,33,33);
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    color: white;
+    font-family: sans serif;
+    line-height: 1.6;
+    font-size: 18px;
+}
+
+a  {
+    color: white;
+}
+
+#title {
+    text-align: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    max-width: 65rem;
+    margin: 0 auto;
+}
+
+.home {
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    flex-direction: row;
+}
+
+.folder-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#search {
+    height: 2em;
+}
+
+#dirlist {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#dirlist > div {
+    padding: 5px;
+    max-width: 400px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+#dirlist > div > video,img {
+  box-shadow: 0 0 15px #000;
+  max-width:100%;
+}
+
+#dirlist > div span {
+}
+
+</style>
+
+<script src="/.app.js"></script>
+<script>
+'use strict';
+document.addEventListener("DOMContentLoaded", function() {
+    let app = new App();
+    window.app = app;
+});
+</script>
+
+
+<h1 id="title">media.arti.ee</h1>
+<div class="container home">
+    <div>Sort by: <a href="?C=N&O=A">File Name</a> <a href="?C=M&O=D">Date</a></div> | <label>Search <input id="search" type="text" autocomplete="on" value=""></label>
+</div>
+<div id="app" class="container">
+</div>
+
+<h1 id="list-path">
